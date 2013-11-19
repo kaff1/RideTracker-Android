@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">RideTracker - Android</string>
+    <string name="action_settings">Settings</string>
+    <string name="pebble_status_label">Pebble connection:</string>
+
+    <!-- These next two are set to match check and x icons from the
+         icon font used in this app. This seemed cleaner and more
+         self-documenting than just setting $ and # in the code. -->
+    <string name="pebble_status_connected">$</string>
+    <string name="pebble_status_disconnected">#</string>
+    <string name="clear_map">Clear</string>
+    <string name="share_map">Share</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+</resources>

@@ -1,0 +1,67 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity$PlaceholderFragment" >
+    <TextView
+        android:id="@+id/pebble_connection_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip"
+        android:text="@string/pebble_status_label"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+    <TextView
+        android:id="@+id/pebble_connection_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/pebble_connection_label"
+        android:gravity="center"
+        android:textSize="30sp"
+        android:textStyle="bold"/>
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/pebble_connection_status"
+        style="?android:attr/buttonBarStyle"
+        android:background="@android:color/holo_red_light"
+        android:weightSum="1.0">
+        <Button
+            android:id="@+id/startStopButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            style="?android:attr/buttonBarButtonStyle"
+            android:background="@android:color/holo_red_light"
+            android:text="@string/start"
+            android:layout_weight="0.33" />
+        <Button
+            android:id="@+id/clearButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/clear_map"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_weight="0.33" />
+        <Button
+            android:id="@+id/shareButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/share_map"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_weight="0.33" />
+    </LinearLayout>
+    <fragment
+        android:id="@+id/map_container"
+        android:layout_below="@id/button_container"
+        class="com.google.android.gms.maps.MapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true" />
+</RelativeLayout>
