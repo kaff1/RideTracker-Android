@@ -46,6 +46,7 @@ public class TrackerService extends Service implements LocationListener,
     public static final String ACTION_MAP_UPDATE_LOCATION = "map_update_location";
     public static final String ACTION_START_STOP_RECEIVED = "start_stop_received";
 
+    public static final String KEY_PEBBLE_STATUS = "key_pebble_status";
     public static final String KEY_LOCATION = "key_new_location";
     public static final String KEY_START_STOP = "key_start_stop";
 
@@ -125,6 +126,7 @@ public class TrackerService extends Service implements LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent connected = new Intent(ACTION_PEBBLE_CONNECTED);
+            connected.putExtra(KEY_PEBBLE_STATUS, true);
             LocalBroadcastManager.getInstance(context).sendBroadcast(connected);
         }
     };
@@ -133,6 +135,7 @@ public class TrackerService extends Service implements LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent disconnected = new Intent(ACTION_PEBBLE_DISCONNECTED);
+            disconnected.putExtra(KEY_PEBBLE_STATUS, false);
             LocalBroadcastManager.getInstance(context).sendBroadcast(disconnected);
         }
     };

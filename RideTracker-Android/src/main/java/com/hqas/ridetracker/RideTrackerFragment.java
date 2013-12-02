@@ -79,14 +79,6 @@ public class RideTrackerFragment extends Fragment {
         Typeface iconFont = Typeface.createFromAsset(res.getAssets(), "fonts/Android-Dev-Icons-1.ttf");
         pebbleStatus.setTypeface(iconFont);
 
-        if (PebbleKit.isWatchConnected(getActivity())) {
-            PebbleKit.startAppOnPebble(getActivity(), MainActivity.PEBBLE_APP_UUID);
-            pebbleConnected();
-        } else {
-            pebbleStatus.setText(getString(R.string.pebble_status_disconnected));
-            pebbleDisconnected();
-        }
-
         MapFragment mapFrag = (MapFragment) getFragmentManager().findFragmentById(R.id.map_container);
         map = mapFrag.getMap();
         if (map != null) {
@@ -139,6 +131,18 @@ public class RideTrackerFragment extends Fragment {
                 new IntentFilter(TrackerService.ACTION_MAP_UPDATE_LOCATION));
         broadcastManager.registerReceiver(startStopReceiver,
                 new IntentFilter(TrackerService.ACTION_START_STOP_RECEIVED));
+        broadcastManager.registerReceiver(pebbleConnectedReceiver,
+                new IntentFilter(TrackerService.ACTION_PEBBLE_CONNECTED));
+        broadcastManager.registerReceiver(pebbleConnectedReceiver,
+                new IntentFilter(TrackerService.ACTION_PEBBLE_DISCONNECTED));
+
+        if (PebbleKit.isWatchConnected(getActivity())) {
+            PebbleKit.startAppOnPebble(getActivity(), MainActivity.PEBBLE_APP_UUID);
+            pebbleConnected();
+        } else {
+            pebbleStatus.setText(res.getString(R.string.pebble_status_disconnected));
+            pebbleDisconnected();
+        }
 
     }
 
@@ -147,6 +151,7 @@ public class RideTrackerFragment extends Fragment {
         map.setLocationSource(null);
         broadcastManager.unregisterReceiver(mapUpdateReceiver);
         broadcastManager.unregisterReceiver(startStopReceiver);
+        broadcastManager.unregisterReceiver(pebbleConnectedReceiver);
         super.onPause();
     }
 
@@ -182,6 +187,20 @@ public class RideTrackerFragment extends Fragment {
                 startStop.setText(res.getString(R.string.stop));
             } else if ((!start) && (startStop != null)) {
                 startStop.setText(res.getString(R.string.start));
+            }
+        }
+    };
+
+    private BroadcastReceiver pebbleConnectedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (isAdded()) {
+                boolean connected = intent.getBooleanExtra(TrackerService.KEY_PEBBLE_STATUS, false);
+                if (connected) {
+                    pebbleConnected();
+                } else {
+                    pebbleDisconnected();
+                }
             }
         }
     };
