@@ -45,10 +45,19 @@ public class TrackerService extends Service implements LocationListener,
     public static final String ACTION_PEBBLE_DISCONNECTED = "pebble_disconnected";
     public static final String ACTION_MAP_UPDATE_LOCATION = "map_update_location";
     public static final String ACTION_START_STOP_RECEIVED = "start_stop_received";
+    public static final String ACTION_RESET_RECEIVED = "reset_received";
 
     public static final String KEY_PEBBLE_STATUS = "key_pebble_status";
     public static final String KEY_LOCATION = "key_new_location";
     public static final String KEY_START_STOP = "key_start_stop";
+
+    private final int KEY_PEBBLE_STARTSTOP = 0;
+    private final int KEY_PEBBLE_LOCATIONUPDATE = 1;
+    private final int KEY_PEBBLE_RESET = 2;
+
+    private final String trackerStartedMessage = "true";
+    private final String trackerStoppedMessage = "false";
+    private final String trackerResetMessage = "reset";
 
     private float distanceTravelled;
 
@@ -65,7 +74,7 @@ public class TrackerService extends Service implements LocationListener,
         PebbleKit.registerReceivedNackHandler(this, pebbleNackReceiver);
         PebbleKit.registerReceivedDataHandler(this, pebbleDataReceiver);
 
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
 
     @Override
@@ -102,8 +111,8 @@ public class TrackerService extends Service implements LocationListener,
             distanceTravelled += distanceFromLastPoint;
             lastLoc = loc;
             PebbleDictionary newLocData = new PebbleDictionary();
-            newLocData.addInt32(0, (int) distanceTravelled);
-            PebbleKit.sendDataToPebble(this, MainActivity.PEBBLE_APP_UUID, newLocData);
+            newLocData.addInt32(KEY_PEBBLE_LOCATIONUPDATE, (int) distanceTravelled);
+            PebbleKit.sendDataToPebble(getBaseContext(), MainActivity.PEBBLE_APP_UUID, newLocData);
         }
     }
 
@@ -169,6 +178,8 @@ public class TrackerService extends Service implements LocationListener,
             } else if ((messageString != null) && (messageString.equals("false"))) {
                 started = false;
                 broadcastStartStop(started);
+            } else if ((messageString != null) && (messageString.equals("reset"))) {
+                broadcastReset();
             } else {
                 Log.w(TAG, "Got unknown message from Pebble: " + messageString);
             }
@@ -183,14 +194,35 @@ public class TrackerService extends Service implements LocationListener,
         LocalBroadcastManager.getInstance(this).sendBroadcast(startStopIntent);
     }
 
-    public void setStarted() {
-        //TODO: Send update to Pebble saying we're started (if there's a Pebble connected)
+    private void broadcastReset() {
+        Intent resetIntent = new Intent(ACTION_RESET_RECEIVED);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(resetIntent);
+    }
+
+    public void setStarted(Context context) {
+        if (PebbleKit.isWatchConnected(context)) {
+            PebbleDictionary startedData = new PebbleDictionary();
+            startedData.addString(KEY_PEBBLE_STARTSTOP, trackerStartedMessage);
+            PebbleKit.sendDataToPebble(context, MainActivity.PEBBLE_APP_UUID, startedData);
+        }
         started = true;
     }
 
-    public void setStopped() {
-        //TODO: Send update to Pebble saying we're stopped (if there's a Pebble connected)
+    public void setStopped(Context context) {
+        if (PebbleKit.isWatchConnected(context)) {
+            PebbleDictionary stoppedData = new PebbleDictionary();
+            stoppedData.addString(KEY_PEBBLE_STARTSTOP, trackerStoppedMessage);
+            PebbleKit.sendDataToPebble(context, MainActivity.PEBBLE_APP_UUID, stoppedData);
+        }
         started = false;
+    }
+
+    public void resetPebbleData(Context context) {
+        if (PebbleKit.isWatchConnected(context)) {
+            PebbleDictionary resetData = new PebbleDictionary();
+            resetData.addString(KEY_PEBBLE_RESET, trackerResetMessage);
+            PebbleKit.sendDataToPebble(context, MainActivity.PEBBLE_APP_UUID, resetData);
+        }
     }
 
     public boolean getStarted() {

@@ -56,6 +56,8 @@ public class RideTrackerFragment extends Fragment {
     private TrackerService tService;
     private LocalBroadcastManager broadcastManager;
     private Button startStop;
+    private Button clear;
+    private boolean initialLaunch;
 
     public RideTrackerFragment() {
     }
@@ -64,6 +66,7 @@ public class RideTrackerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         tService = ((MainActivity)getActivity()).getTrackerService();
+        initialLaunch = true;
     }
 
     @Override
@@ -83,6 +86,8 @@ public class RideTrackerFragment extends Fragment {
         map = mapFrag.getMap();
         if (map != null) {
             map.setMyLocationEnabled(true);
+            map.getUiSettings().setZoomControlsEnabled(false);
+            map.getUiSettings().setZoomGesturesEnabled(false);
         }
 
         startStop = (Button)rootView.findViewById(R.id.startStopButton);
@@ -91,19 +96,19 @@ public class RideTrackerFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (tService.getStarted()) {
-                    tService.setStopped();
-                    startStop.setText(res.getString(R.string.start));
+                    stopTracker();
                 } else {
-                    tService.setStarted();
-                    startStop.setText(res.getString(R.string.stop));
+                    startTracker();
                 }
             }
         });
 
-        rootView.findViewById(R.id.clearButton).setOnClickListener(new OnClickListener() {
+        clear = (Button)rootView.findViewById(R.id.clearButton);
+        clear.setEnabled(false);
+        clear.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                tService.resetPebbleData(getActivity().getApplicationContext());
             }
         });
 
@@ -135,6 +140,8 @@ public class RideTrackerFragment extends Fragment {
                 new IntentFilter(TrackerService.ACTION_PEBBLE_CONNECTED));
         broadcastManager.registerReceiver(pebbleConnectedReceiver,
                 new IntentFilter(TrackerService.ACTION_PEBBLE_DISCONNECTED));
+        broadcastManager.registerReceiver(resetReceiver,
+                new IntentFilter(TrackerService.ACTION_RESET_RECEIVED));
 
         if (PebbleKit.isWatchConnected(getActivity())) {
             PebbleKit.startAppOnPebble(getActivity(), MainActivity.PEBBLE_APP_UUID);
@@ -151,6 +158,7 @@ public class RideTrackerFragment extends Fragment {
         map.setLocationSource(null);
         broadcastManager.unregisterReceiver(mapUpdateReceiver);
         broadcastManager.unregisterReceiver(startStopReceiver);
+        broadcastManager.unregisterReceiver(resetReceiver);
         broadcastManager.unregisterReceiver(pebbleConnectedReceiver);
         super.onPause();
     }
@@ -169,8 +177,9 @@ public class RideTrackerFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             Location loc = intent.getParcelableExtra(TrackerService.KEY_LOCATION);
-            float zoom = map.getCameraPosition().zoom == 2.0f ? 15.0f : map.getCameraPosition().zoom;
+            float zoom = 15.0f;
             if (loc != null) {
+                initialLaunch = false;
                 CameraPosition myPosition = new CameraPosition.Builder()
                     .target(new LatLng(loc.getLatitude(), loc.getLongitude()))
                     .zoom(zoom).build();
@@ -184,9 +193,9 @@ public class RideTrackerFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             boolean start = intent.getBooleanExtra(TrackerService.KEY_START_STOP, false);
             if ((start) && (startStop != null)) {
-                startStop.setText(res.getString(R.string.stop));
+                startTracker();
             } else if ((!start) && (startStop != null)) {
-                startStop.setText(res.getString(R.string.start));
+                stopTracker();
             }
         }
     };
@@ -204,4 +213,30 @@ public class RideTrackerFragment extends Fragment {
             }
         }
     };
+
+    private BroadcastReceiver resetReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //TODO: Clear the tracked map
+        }
+    };
+
+    private void stopTracker() {
+        tService.setStopped(getActivity().getApplicationContext());
+        startStop.setText(res.getString(R.string.start));
+        clear.setEnabled(true);
+    }
+
+    private void startTracker() {
+        tService.setStarted(getActivity().getApplicationContext());
+        startStop.setText(res.getString(R.string.stop));
+        clear.setEnabled(false);
+    }
+
+    @Override
+    public void onDestroy() {
+        locMan.removeUpdates(tService);
+        locMan = null;
+        super.onDestroy();
+    }
 }
